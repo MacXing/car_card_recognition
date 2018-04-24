@@ -1,6 +1,6 @@
 # -*- enconding:utf-8 -*-
 import cv2,string
-import numpy
+
 from PIL import Image, ImageDraw, ImageFont
 import random
 def random_data():
@@ -71,7 +71,7 @@ def image(echpo):
         draw.text(position6, str6, fill=fillColor,font=font)
         draw.text(position7, str7, fill=fillColor,font=font)
         # 使用PIL中的save方法保存图片到本地
-        img_PIL.save('D:\\workspace\\car_card_recognition\\image\\' +str_name+ '.jpg', 'jpeg')
+        img_PIL.save('H:\\毕业论文\\car_recognition\\image\\' +str_name+ '.jpg', 'jpeg')
 
 # 转换回OpenCV格式
 # img = cv2.cvtColor(numpy.asarray(img_PIL), cv2.COLOR_RGB2BGR)
@@ -107,5 +107,5 @@ def image(echpo):
 # cv2.SaveImage('C:\\Users\\User\\Desktop\\3.jpg', img)
 
 if __name__ == '__main__':
-    image(10)
+    image(100000)
     # random_data()
