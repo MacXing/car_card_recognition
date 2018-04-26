@@ -26,16 +26,19 @@ def image_position(image):
     element1 = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 1))
     element2 = cv2.getStructuringElement(cv2.MORPH_RECT, (8, 6))
     # 膨胀一次，让轮廓突出
-    dilation = cv2.dilate(binary, element2, iterations=1)
-    # cv2.imshow('', dilation)
-    # cv2.waitKey(0)
+    dilation = cv2.dilate(binary, element1, iterations=1)
+    cv2.imshow('', dilation)
+    cv2.waitKey(0)
     # 腐蚀一次，去掉细节
-    erosion = cv2.erode(dilation, element1, iterations=1)
+    # erosion = cv2.erode(dilation, element1, iterations=1)
     # cv2.imshow('', erosion)
     # cv2.waitKey(0)
     # 再次膨胀，让轮廓明显一些
     dilation2 = cv2.dilate(dilation, element2, iterations=1)
     # cv2.imshow('', dilation2)
+    # cv2.waitKey(0)
+    dilation3 = cv2.dilate(dilation2, element2, iterations=1)
+    # cv2.imshow('', dilation3)
     # cv2.waitKey(0)
     region = findPlateNumberRegion(dilation2)
     # print(region)
