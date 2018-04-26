@@ -3,9 +3,9 @@ import os
 import random
 from scipy.misc import imread
 import string
-import tensorflow as tf
+from sklearn import svm
+import time
 classfies = []
-classfies_index = []
 
 def get_labels():
     dict_labels = {}
@@ -66,7 +66,7 @@ def init_data():
     for index,label in enumerate(list_labels):
         if label == a:
             y = index
-    for root,_,filename in os.walk(os.path.join(r'D:\workspace\EasyPR-python\data\easypr_train_data\chars',a),topdown=False):
+    for root,_,filename in os.walk(os.path.join(r'D:\毕业论文\car_recognition\chars',a),topdown=False):
         name = random.choice(filename)
         # print(name)
         x = imread(os.path.join(root,name))
@@ -74,33 +74,77 @@ def init_data():
 
         return x,y
 
-def SVM(X,W,b):
-    X = tf.reshape(X,[-1,20*20])
-    return tf.nn.softmax(tf.matmul(X,W)+b)
+def create_svm(dataMat, dataLabel, decision='ovr'):
+    clf = svm.SVC(decision_function_shape=decision)
+    clf.fit(dataMat, dataLabel)
+    return clf
+def train():
+    tbasePath = "Mnist-image\\test\\"
+    tcName = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    tst = time.clock()
+    allErrCount = 0
+    allErrorRate = 0.0
+    allScore = 0.0
+    for tcn  in tcName:
+        testPath = "Mnist-image\\test\\" + tcn
+        #print("class " + tcn + " path is: {}.".format(testPath))
+        tflist = get_file_list(testPath)
+        #tflist
+        tdataMat, tdataLabel = read_and_convert(tflist)
+        print("test dataMat shape: {0}, test dataLabel len: {1} ".format(tdataMat.shape, len(tdataLabel)))
 
-def train(do_train):
-    W = tf.Variable(tf.zeros([20*20,67]))
-    b = tf.Variable(tf.zeros([67]))
-    X = tf.placeholder(tf.float32,[20,20])
-    _y = tf.placeholder(tf.float32,[67,1])
-    _pred = SVM(X,W,b)
-    loss = -tf.reduce_sum(_y*tf.log(_pred))
-    optm = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(loss)
-    sess = tf.Session()
-    saver = tf.train.Saver()
-    sess.run(tf.initialize_all_variables())
-    if do_train ==0:
-        epochs = 1000
-        for epoch in range(epochs):
-            x,y = init_data()
-            y_data = np.zeros([67,1])
-            y_data[y] = 1
-            # x = x.reshape([20,20])
-            sess.run(optm,feed_dict={X:x,_y:y_data})
-            if epoch % 10==0:
-                loss = sess.run(loss,feed_dict={X:x,_y:y_data})
-                print("Epoch: %d/%d,Loss: %f"%(epoch,epochs,loss))
+        #print("test dataLabel: {}".format(len(tdataLabel)))
+        pre_st = time.clock()
+        preResult = clf.predict(tdataMat)
+        pre_et = time.clock()
+        print("Recognition  " + tcn + " spent {:.4f}s.".format((pre_et-pre_st)))
+        #print("predict result: {}".format(len(preResult)))
+        errCount = len([x for x in preResult if x!=tcn])
+        print("errorCount: {}.".format(errCount))
+        allErrCount += errCount
+        score_st = time.clock()
+        score = clf.score(tdataMat, tdataLabel)
+        score_et = time.clock()
+        print("computing score spent {:.6f}s.".format(score_et-score_st))
+        allScore += score
+        print("score: {:.6f}.".format(score))
+        print("error rate is {:.6f}.".format((1-score)))
+        print("---------------------------------------------------------")
+
+
+    tet = time.clock()
+    print("Testing All class total spent {:.6f}s.".format(tet-tst))
+    print("All error Count is: {}.".format(allErrCount))
+    avgAccuracy = allScore/10.0
+    print("Average accuracy is: {:.6f}.".format(avgAccuracy))
+    print("Average error rate is: {:.6f}.".format(1-avgScore))
+# def SVM(X,W,b):
+#     X = tf.reshape(X,[-1,20*20])
+#     return tf.nn.softmax(tf.matmul(X,W)+b)
+
+# def train(do_train):
+#     W = tf.Variable(tf.zeros([20*20,67]))
+#     b = tf.Variable(tf.zeros([67]))
+#     X = tf.placeholder(tf.float32,[20,20])
+#     _y = tf.placeholder(tf.float32,[67,1])
+#     _pred = SVM(X,W,b)
+#     loss = -tf.reduce_sum(_y*tf.log(_pred))
+#     optm = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(loss)
+#     sess = tf.Session()
+#     saver = tf.train.Saver()
+#     sess.run(tf.initialize_all_variables())
+#     if do_train ==0:
+#         epochs = 1000
+#         for epoch in range(epochs):
+#             x,y = init_data()
+#             y_data = np.zeros([67,1])
+#             y_data[y] = 1
+#             # x = x.reshape([20,20])
+#             sess.run(optm,feed_dict={X:x,_y:y_data})
+#             if epoch % 10==0:
+#                 loss = sess.run(loss,feed_dict={X:x,_y:y_data})
+#                 print("Epoch: %d/%d,Loss: %f"%(epoch,epochs,loss))
 
 if __name__ == '__main__':
-    train(0)
+    train()
 
