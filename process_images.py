@@ -99,7 +99,7 @@ def process_image(img):
                 break
         return end_
 
-
+    images = []
     n = 1
     start = 1
     end = 2
@@ -113,6 +113,10 @@ def process_image(img):
             n = end
             if end - start > 5:
                 cj = img_thre[1:height, start:end]
-                cv2.imshow('caijian', cj)
-                cv2.waitKey(0)
+                cj = cv2.resize(cj,(20,20))
+                # cv2.imshow('caijian', cj)
+                # cv2.waitKey(0)
+                images.append(cj)
+
+    return images
 

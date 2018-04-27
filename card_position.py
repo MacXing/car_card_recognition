@@ -1,11 +1,10 @@
 import cv2
-import numpy as np
 from process_images import process_image
 from correct_cart import correct_image
 from findRegion import findPlateNumberRegion
 
 def image_position(image):
-    cv2.imshow('',image)
+    cv2.imshow('Image',image)
     cv2.waitKey(0)
     #灰度图
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -27,8 +26,8 @@ def image_position(image):
     element2 = cv2.getStructuringElement(cv2.MORPH_RECT, (8, 6))
     # 膨胀一次，让轮廓突出
     dilation = cv2.dilate(binary, element1, iterations=1)
-    cv2.imshow('', dilation)
-    cv2.waitKey(0)
+    # cv2.imshow('', dilation)
+    # cv2.waitKey(0)
     # 腐蚀一次，去掉细节
     # erosion = cv2.erode(dilation, element1, iterations=1)
     # cv2.imshow('', erosion)
@@ -43,9 +42,9 @@ def image_position(image):
     region = findPlateNumberRegion(dilation2)
     # print(region)
     # 用绿线画出这些找到的轮廓
-    cImg = img.copy()
+    cImg = image.copy()
     for box in region:
-        cv2.drawContours(img, [box], 0, (0, 255, 0), 2)
+        cv2.drawContours(image, [box], 0, (0, 255, 0), 2)
         Xs = [i[0] for i in box]
         Ys = [i[1] for i in box]
         x1 = min(Xs)
@@ -56,11 +55,11 @@ def image_position(image):
         width = x2 - x1
         cropImg = cImg[y1:y1 + hight, x1:x1 + width]
 
-    cv2.imshow('1',img)
+    cv2.imshow('position',image)
     cv2.waitKey(0)
 
-    rotated = correct_image(cropImg)
-    process_image(rotated)
+    return cropImg
+
 
 if __name__ == '__main__':
     img = cv2.imread(r'D:\workspace\car_card_recognition\data\0.jpg')

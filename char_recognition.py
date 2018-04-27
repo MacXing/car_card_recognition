@@ -1,10 +1,12 @@
 import numpy as np
 import os
 import random
-from scipy.misc import imread
+from PIL import Image
 import string
 from sklearn import svm
 import time
+from sklearn.externals import joblib
+
 classfies = []
 
 def get_labels():
@@ -50,6 +52,12 @@ def get_labels():
 
     return dict_labels,list_labels
 
+def get_label(_preds):
+    dict_labels,list_labels = get_labels()
+    results = [list(dict_labels.keys())[list(dict_labels.values()).index(
+                list_labels[pred])]for pred in _preds]
+    return results
+
 def open_dir():
     global classfies
     for root, dirs, filename in os.walk('D:\workspace\EasyPR-python\data\easypr_train_data\chars', topdown=False):
@@ -59,92 +67,67 @@ def open_dir():
 
 def init_data():
     open_dir()
-    a = random.choice(classfies)
-    # print(a)
     dict_labels,list_labels = get_labels()
     # print(len(list_labels))
+    x_data = []
+    y_data = []
     for index,label in enumerate(list_labels):
-        if label == a:
-            y = index
-    for root,_,filename in os.walk(os.path.join(r'D:\毕业论文\car_recognition\chars',a),topdown=False):
-        name = random.choice(filename)
-        # print(name)
-        x = imread(os.path.join(root,name))
-        # print(os.path.join(root,name))
+        print(label)
+        for root,_,filename in os.walk(r'H:/毕业论文/car_recognition/chars/'+str(label),topdown=False):
+            for name in filename:
+                # print(name)
+                img = Image.open(os.path.join(root,name)).convert('L')
+                img = np.round(np.array(img,'i')/255)
+                x_data.append(img)
+                # print(os.path.join(root,name))
+                y_data.append(index)
+                # print(count)
+    return x_data,y_data
 
-        return x,y
-
-def create_svm(dataMat, dataLabel, decision='ovr'):
-    clf = svm.SVC(decision_function_shape=decision)
+def create_svm(dataMat, dataLabel, decision='ovo'):
+    clf = svm.SVC(kernel='rbf',decision_function_shape=decision)
     clf.fit(dataMat, dataLabel)
+    joblib.dump(clf,r'D:\workspace\car_card_recognition\model\train_model.m')
     return clf
+
 def train():
-    tbasePath = "Mnist-image\\test\\"
-    tcName = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
     tst = time.clock()
-    allErrCount = 0
-    allErrorRate = 0.0
-    allScore = 0.0
-    for tcn  in tcName:
-        testPath = "Mnist-image\\test\\" + tcn
-        #print("class " + tcn + " path is: {}.".format(testPath))
-        tflist = get_file_list(testPath)
-        #tflist
-        tdataMat, tdataLabel = read_and_convert(tflist)
-        print("test dataMat shape: {0}, test dataLabel len: {1} ".format(tdataMat.shape, len(tdataLabel)))
+    x_data, y_data = init_data()
+    x_test = []
+    y_test = []
+    rans = [ i for i in range(len(x_data))]
+    for i in range(1000):
+        a = random.choice(rans)
+        x_test.append(x_data[a])
+        y_test.append(y_data[a])
+    x_train = np.array(x_data).reshape([len(x_data), 400])
+    y_train = np.array(y_data).reshape([len(y_data), 1])
+    clf = create_svm(x_train,y_train)
+    pre_st = time.clock()
+    print("Training Finshed! {:.3f}".format((pre_st - tst)))
+    x_test = np.array(x_test).reshape([len(x_test),400])
+    y_test = np.array(y_test).reshape([len(y_test),1])
+    score = clf.score(x_test,y_test)
+    print("Trained Score {:.3f}%".format(score*100))
 
-        #print("test dataLabel: {}".format(len(tdataLabel)))
-        pre_st = time.clock()
-        preResult = clf.predict(tdataMat)
-        pre_et = time.clock()
-        print("Recognition  " + tcn + " spent {:.4f}s.".format((pre_et-pre_st)))
-        #print("predict result: {}".format(len(preResult)))
-        errCount = len([x for x in preResult if x!=tcn])
-        print("errorCount: {}.".format(errCount))
-        allErrCount += errCount
-        score_st = time.clock()
-        score = clf.score(tdataMat, tdataLabel)
-        score_et = time.clock()
-        print("computing score spent {:.6f}s.".format(score_et-score_st))
-        allScore += score
-        print("score: {:.6f}.".format(score))
-        print("error rate is {:.6f}.".format((1-score)))
-        print("---------------------------------------------------------")
-
-
-    tet = time.clock()
-    print("Testing All class total spent {:.6f}s.".format(tet-tst))
-    print("All error Count is: {}.".format(allErrCount))
-    avgAccuracy = allScore/10.0
-    print("Average accuracy is: {:.6f}.".format(avgAccuracy))
-    print("Average error rate is: {:.6f}.".format(1-avgScore))
-# def SVM(X,W,b):
-#     X = tf.reshape(X,[-1,20*20])
-#     return tf.nn.softmax(tf.matmul(X,W)+b)
-
-# def train(do_train):
-#     W = tf.Variable(tf.zeros([20*20,67]))
-#     b = tf.Variable(tf.zeros([67]))
-#     X = tf.placeholder(tf.float32,[20,20])
-#     _y = tf.placeholder(tf.float32,[67,1])
-#     _pred = SVM(X,W,b)
-#     loss = -tf.reduce_sum(_y*tf.log(_pred))
-#     optm = tf.train.GradientDescentOptimizer(learning_rate=0.01).minimize(loss)
-#     sess = tf.Session()
-#     saver = tf.train.Saver()
-#     sess.run(tf.initialize_all_variables())
-#     if do_train ==0:
-#         epochs = 1000
-#         for epoch in range(epochs):
-#             x,y = init_data()
-#             y_data = np.zeros([67,1])
-#             y_data[y] = 1
-#             # x = x.reshape([20,20])
-#             sess.run(optm,feed_dict={X:x,_y:y_data})
-#             if epoch % 10==0:
-#                 loss = sess.run(loss,feed_dict={X:x,_y:y_data})
-#                 print("Epoch: %d/%d,Loss: %f"%(epoch,epochs,loss))
+def prediction(imgs):
+    clf = joblib.load(r'D:\workspace\car_card_recognition\model\train_model.m')
+    print("Read Model Ready!")
+    pre_start = time.clock()
+    _preds = []
+    for img in imgs:
+        image = np.round(img/255)
+        image = image.reshape([1,400])
+        _pred = clf.predict(image)
+        _preds.append(_pred[0])
+    results = get_label(_preds)
+    pre_end = time.clock()
+    print("Predtion:"+''.join(results))
+    print("Predtion spent time: {:.4f}s.".format((pre_end-pre_start)))
 
 if __name__ == '__main__':
+    #训练
     train()
-
+    #预测
+    # init_data()
